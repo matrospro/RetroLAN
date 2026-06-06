@@ -2,6 +2,7 @@
   "name": "retrolan",
   "version": "2.0.0",
   "description": "RetroLAN — LAN Party Hub: trova PC, chat, lobby, server, file, tornei, screenshot, jukebox, diagnostica",
+  "author": "matrospro <gamerosiello@gmail.com>",
   "main": "src/main/main.js",
   "scripts": {
     "start": "node_modules\\electron\\dist\\electron.exe .",
@@ -37,13 +38,11 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": ["x64"]
         },
         "portable"
       ],
-      "icon": "build/icon.png",
-      "signAndEditExecutable": false,
-      "sign": false
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
@@ -52,18 +51,12 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "RetroLAN",
-      "uninstallDisplayName": "RetroLAN v2.0",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
+      "uninstallDisplayName": "RetroLAN v2.0"
     },
     "mac": {
       "target": ["dmg", "zip"],
-      "icon": "build/icon.icns",
-      "category": "public.app-category.utilities",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "asarUnpack": ["node_modules/systeminformation/**"]
+      "icon": "build/icon.png",
+      "category": "public.app-category.utilities"
     },
     "dmg": {
       "title": "RetroLAN v2.0",
@@ -88,8 +81,8 @@
     },
     "publish": {
       "provider": "github",
-      "owner": "retrolan",
-      "repo": "retrolan",
+      "owner": "matrospro",
+      "repo": "RetroLAN",
       "releaseType": "release"
     },
     "asar": true,
