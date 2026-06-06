@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>RetroLAN</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0}
+#app{height:100vh;display:flex;flex-direction:column}
+:root{--bg1:#0a0a0f;--bg2:#12121a;--card:#1a1a24;--hover:#22222e;--accent:#6c5ce7;--glow:rgba(108,92,231,0.3);--green:#00b894;--red:#e17055;--yellow:#fdcb6e;--text:#e0e0e0;--muted:#888;--border:#2a2a3a}
+.titlebar{-webkit-app-region:drag;height:36px;background:var(--bg2);display:flex;align-items:center;justify-content:space-between;padding:0 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.titlebar-title{font-weight:600;font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.window-controls{-webkit-app-region:no-drag;display:flex;gap:6px}
+.window-btn{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer;transition:filter .15s}
+.window-btn:hover{filter:brightness(1.3)}
+.btn-close{background:var(--red)}
+.btn-min{background:var(--yellow)}
+.btn-max{background:var(--green)}
+.app-body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-nav{flex:1;padding:8px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;transition:.15s;font-size:13px;border-left:3px solid transparent}
+.nav-item:hover{background:var(--hover)}
+.nav-item.active{background:rgba(108,92,231,.12);border-left-color:var(--accent);color:var(--accent)}
+.nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px}
+.sidebar-footer{padding:10px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.main-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.page{display:none;flex:1;padding:16px 20px;overflow-y:auto}
+.page.active{display:flex;flex-direction:column}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;transition:.15s}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.stat-card{text-align:center;padding:16px}
+.stat-value{font-size:26px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:12px;color:var(--muted);margin-top:2px}
+.peer-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--card);margin-bottom:6px;border:1px solid var(--border)}
+.peer-avatar{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#a29bfe);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.peer-info{flex:1;min-width:0}
+.peer-name{font-weight:600;font-size:13px}
+.peer-meta{font-size:11px;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.status-dot.online{background:var(--green)}
+.status-dot.offline{background:var(--red)}
+.chat-container{flex:1;display:flex;flex-direction:column}
+.chat-messages{flex:1;overflow-y:auto;padding:4px 0}
+.chat-msg{padding:4px 10px;margin-bottom:2px;border-radius:6px;font-size:13px}
+.chat-msg .msg-from{font-weight:600;font-size:11px;color:var(--accent)}
+.chat-msg .msg-text{font-size:13px}
+.chat-msg .msg-time{font-size:10px;color:var(--muted);float:right}
+.chat-input-area{display:flex;gap:6px;padding-top:8px}
+.chat-input{flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;outline:none}
+.chat-input:focus{border-color:var(--accent)}
+.btn{padding:7px 16px;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:.15s;color:#fff;white-space:nowrap}
+.btn-primary{background:var(--accent)}
+.btn-primary:hover{background:#7c6cf7;box-shadow:0 0 16px var(--glow)}
+.btn-sm{padding:5px 12px;font-size:11px}
+.btn-green{background:var(--green)}
+.btn-green:hover{background:#00d9a4}
+.btn-red{background:var(--red)}
+.btn-yellow{background:var(--yellow);color:#000}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.game-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--card);margin-bottom:6px;border:1px solid var(--border)}
+.game-icon{font-size:24px;flex-shrink:0}
+.game-info{flex:1}
+.game-name{font-weight:600;font-size:13px}
+.game-platform{font-size:11px;color:var(--muted)}
+.game-status.running{color:var(--green);font-size:11px}
+.progress-bar{height:4px;background:var(--hover);border-radius:2px;margin-top:4px;overflow:hidden}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.lobby-card{padding:14px;margin-bottom:8px}
+.lobby-header{display:flex;justify-content:space-between;align-items:center}
+.lobby-name{font-weight:700;font-size:15px}
+.lobby-games{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.lobby-game-tag{padding:2px 8px;border-radius:10px;font-size:11px;background:rgba(108,92,231,.15);color:var(--accent)}
+.lobby-players{font-size:12px;color:var(--muted);margin-top:4px}
+.ach-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:4px;border:1px solid var(--border)}
+.ach-item.locked{opacity:.45}
+.ach-icon{font-size:22px}
+.ach-info{flex:1}
+.ach-name{font-weight:600;font-size:13px}
+.ach-desc{font-size:11px;color:var(--muted)}
+.server-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;margin-bottom:4px;background:var(--card);border:1px solid var(--border)}
+.server-name{font-weight:600;flex:1;font-size:13px}
+.server-ip{font-size:11px;color:var(--muted);font-family:monospace}
+.server-players{font-size:11px;color:var(--green)}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.section-title{font-size:17px;font-weight:700}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+input,select{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-size:13px;outline:none}
+input:focus,select:focus{border-color:var(--accent)}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:2px}
+.tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--bg2);padding:3px;border-radius:8px}
+.tab{padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:.15s}
+.tab.active{background:var(--card);color:var(--text)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.notif{position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid var(--accent);border-radius:8px;padding:12px 18px;z-index:999;max-width:350px;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+.notif-title{font-weight:600;font-size:13px}
+.notif-text{font-size:12px;color:var(--muted)}
+</style></head>
+<body>
+<div id="app">
+<div class="titlebar">
+<div class="titlebar-title">🎮 RetroLAN <span id="versionLabel">v2.0</span></div>
+<div class="window-controls">
+<button class="window-btn btn-min" onclick="retroLAN.minimize()"></button>
+<button class="window-btn btn-max" onclick="retroLAN.maximize()"></button>
+<button class="window-btn btn-close" onclick="retroLAN.close()"></button>
+</div></div>
+<div class="app-body">
+<div class="sidebar">
+<div class="sidebar-nav">
+<div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')">📊 Dashboard</div>
+<div class="nav-item" data-page="peers" onclick="switchPage('peers')">💻 PC <span class="badge" id="peerCount">0</span></div>
+<div class="nav-item" data-page="chat" onclick="switchPage('chat')">💬 Chat</div>
+<div class="nav-item" data-page="lobby" onclick="switchPage('lobby')">🏠 Lobby</div>
+<div class="nav-item" data-page="games" onclick="switchPage('games')">🎮 Giochi</div>
+<div class="nav-item" data-page="servers" onclick="switchPage('servers')">🌐 Server</div>
+<div class="nav-item" data-page="files" onclick="switchPage('files')">📁 File</div>
+<div class="nav-item" data-page="wol" onclick="switchPage('wol')">🔌 Wake-on-LAN</div>
+<div class="nav-item" data-page="gameserver" onclick="switchPage('gameserver')">⚡ Game Server</div>
+<div class="nav-item" data-page="modpack" onclick="switchPage('modpack')">📦 Modpack</div>
+<div class="nav-item" data-page="jukebox" onclick="switchPage('jukebox')">🎵 Jukebox</div>
+<div class="nav-item" data-page="tournament" onclick="switchPage('tournament')">🏆 Torneo</div>
+<div class="nav-item" data-page="screenshots" onclick="switchPage('screenshots')">🖼️ Screenshot</div>
+<div class="nav-item" data-page="netdiag" onclick="switchPage('netdiag')">📡 Diagnostica</div>
+<div class="nav-item" data-page="timetracker" onclick="switchPage('timetracker')">⏱️ Tempo Gioco</div>
+<div class="nav-item" data-page="killswitch" onclick="switchPage('killswitch')">🔒 Killswitch</div>
+<div class="nav-item" data-page="networkmap" onclick="switchPage('networkmap')">🗺️ Rete</div>
+<div class="nav-item" data-page="achievements" onclick="switchPage('achievements')">🏆 Achievement</div>
+<div class="nav-item" data-page="settings" onclick="switchPage('settings')">⚙️ Impostazioni</div>
+</div>
+<div class="sidebar-footer" id="statusBar">🔍 Avvio...</div>
+</div>
+<div class="main-content">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+<div class="section-header"><div class="section-title">📊 Dashboard</div><button class="btn btn-sm btn-primary" onclick="switchPage('peers')">Vedi PC</button></div>
+<div class="card-grid" id="dashStats"></div>
+<div style="margin-top:14px"><div class="section-title" style="font-size:14px;margin-bottom:10px">🟢 Online ora</div><div id="dashPeers"></div></div>
+</div>
+
+<!-- PEERS -->
+<div class="page" id="page-peers">
+<div class="section-header"><div class="section-title">💻 PC in LAN</div><button class="btn btn-sm btn-primary" onclick="refreshPeers()">🔄</button></div>
+<div id="peersList"></div>
+</div>
+
+<!-- CHAT -->
+<div class="page" id="page-chat">
+<div class="section-title" style="margin-bottom:10px">💬 Chat LAN</div>
+<div class="chat-container">
+<div class="chat-messages" id="chatMessages"></div>
+<div class="chat-input-area">
+<input class="chat-input" id="chatInput" placeholder="Scrivi..." onkeydown="if(event.key==='Enter')sendChat()">
+<button class="btn btn-primary" onclick="sendChat()">Invia</button>
+</div></div></div>
+
+<!-- LOBBY -->
+<div class="page" id="page-lobby">
+<div class="section-header"><div class="section-title">🏠 Lobby LAN</div></div>
+<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+<input class="chat-input" id="lobbyName" placeholder="Nome stanza..." style="width:180px">
+<button class="btn btn-primary btn-sm" onclick="createLobby()">+ Crea</button>
+</div>
+<div id="lobbiesList"></div>
+</div>
+
+<!-- GAMES -->
+<div class="page" id="page-games">
+<div class="section-header"><div class="section-title">🎮 Giochi Rilevati</div><button class="btn btn-sm btn-outline" onclick="refreshGames()">🔄</button></div>
+<div id="gamesList"></div>
+</div>
+
+<!-- SERVERS -->
+<div class="page" id="page-servers">
+<div class="section-header"><div class="section-title">🌐 Server Discovery</div></div>
+<div id="serversList"><p style="color:var(--muted)">Scansione automatica...</p></div>
+</div>
+
+<!-- FILES -->
+<div class="page" id="page-files">
+<div class="section-title" style="margin-bottom:10px">📁 Trasferimento File</div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Clicca "📁 Invia" su un PC nella lista per inviare file a velocità LAN.</p>
+<div id="fileTransfers"></div>
+</div>
+
+<!-- WAKE-ON-LAN -->
+<div class="page" id="page-wol">
+<div class="section-title" style="margin-bottom:10px">🔌 Wake-on-LAN</div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:12px">Accendi un PC spento nella rete locale (deve supportare WOL).</p>
+<div id="wolPeers"></div>
+</div>
+
+<!-- GAME SERVER -->
+<div class="page" id="page-gameserver">
+<div class="section-header"><div class="section-title">⚡ Game Server Manager</div></div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Avvia e ferma server Minecraft, Terraria e altri direttamente da qui.</p>
+<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+<input id="gsName" placeholder="Nome server" style="width:140px">
+<input id="gsExe" placeholder="Percorso .exe/.jar" style="width:240px">
+<input id="gsArgs" placeholder="Argomenti (opz)" style="width:140px">
+<button class="btn btn-sm btn-green" onclick="addCustomServer()">+ Aggiungi</button>
+</div>
+<div id="gsList"></div>
+</div>
+
+<!-- MODPACK -->
+<div class="page" id="page-modpack">
+<div class="section-header"><div class="section-title">📦 Modpack Sync</div></div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Condividi modpack con tutta la LAN. Le cartelle vengono zippate automaticamente.</p>
+<div style="display:flex;gap:6px;margin-bottom:12px">
+<input id="modpackPath" placeholder="Percorso cartella/zip..." style="flex:1">
+<button class="btn btn-sm btn-primary" onclick="packAndShare()">📦 Pack & Condividi</button>
+</div>
+<div id="modpackList"></div>
+</div>
+
+<!-- JUKEBOX -->
+<div class="page" id="page-jukebox">
+<div class="section-header"><div class="section-title">🎵 LAN Jukebox</div></div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Aggiungi tracce alla coda e trasmettile a tutti i PC della LAN.</p>
+<div style="display:flex;gap:6px;margin-bottom:12px">
+<input id="jukeboxFile" placeholder="Percorso file audio..." style="flex:1">
+<button class="btn btn-sm btn-primary" onclick="queueTrack()">➕ Coda</button>
+</div>
+<div style="display:flex;gap:6px;margin-bottom:10px">
+<button class="btn btn-sm btn-green" onclick="playJukebox()">▶️ Play</button>
+<button class="btn btn-sm btn-yellow" onclick="skipJukebox()">⏭️ Skip</button>
+</div>
+<div id="jukeboxStatus">Nessun brano in coda.</div>
+</div>
+
+<!-- TOURNAMENT -->
+<div class="page" id="page-tournament">
+<div class="section-header"><div class="section-title">🏆 Torneo</div></div>
+<div class="tabs"><div class="tab active" data-tab="tournament-create" onclick="switchTab(this,'tournament-create')">Crea</div><div class="tab" data-tab="tournament-list" onclick="switchTab(this,'tournament-list')">Attivi</div></div>
+<div class="tab-content active" id="tab-tournament-create">
+<div style="display:grid;gap:8px;max-width:400px">
+<input id="tName" placeholder="Nome torneo">
+<input id="tGame" placeholder="Gioco (es. CS2)">
+<input id="tPlayers" placeholder="Giocatori (separati da virgola)">
+<select id="tTeamSize"><option value="1">1v1</option><option value="2">2v2</option><option value="5">5v5</option></select>
+<button class="btn btn-primary" onclick="createTournament()">Crea Torneo</button>
+</div></div>
+<div class="tab-content" id="tab-tournament-list"><div id="tournamentsView"></div></div>
+</div>
+
+<!-- SCREENSHOTS -->
+<div class="page" id="page-screenshots">
+<div class="section-header"><div class="section-title">🖼️ Screenshot Hub</div><button class="btn btn-sm btn-outline" onclick="refreshScreenshots()">🔄</button></div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Screenshot Steam condivisi e galleria LAN in tempo reale.</p>
+<div id="screenshotsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px"></div>
+</div>
+
+<!-- NETDIAG -->
+<div class="page" id="page-netdiag">
+<div class="section-header"><div class="section-title">📡 Diagnostica Rete</div></div>
+<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+<button class="btn btn-sm btn-primary" onclick="runPingAll()">🏓 Ping Tutti</button>
+<button class="btn btn-sm btn-green" onclick="runSpeedtest()">🚀 Speed Test</button>
+</div>
+<div id="netdiagResults"></div>
+</div>
+
+<!-- TIMETRACKER -->
+<div class="page" id="page-timetracker">
+<div class="section-header"><div class="section-title">⏱️ Tempo di Gioco</div></div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:10px">Monitoraggio automatico delle sessioni di gioco.</p>
+<div id="timetrackerStats"></div>
+</div>
+
+<!-- KILLSWITCH -->
+<div class="page" id="page-killswitch">
+<div class="section-title" style="margin-bottom:10px">🔒 Internet Killswitch</div>
+<p style="color:var(--muted);font-size:13px;margin-bottom:12px">Blocca tutto il traffico internet lasciando attiva solo la LAN. Richiede amministratore.</p>
+<div style="display:flex;gap:10px">
+<button class="btn btn-red" id="ksOn" onclick="killswitchOn()">🔴 Blocca Internet</button>
+<button class="btn btn-green" id="ksOff" onclick="killswitchOff()">🟢 Sblocca</button>
+</div>
+<div id="ksStatus" style="margin-top:10px;font-size:13px"></div>
+</div>
+
+<!-- NETWORK MAP -->
+<div class="page" id="page-networkmap">
+<div class="section-title" style="margin-bottom:12px">🗺️ Mappa di Rete</div>
+<div id="networkMap" style="display:flex;flex-direction:column;align-items:center"></div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div class="page" id="page-achievements">
+<div class="section-title" style="margin-bottom:12px">🏆 Achievement LAN</div>
+<div id="achievementsList"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+<div class="section-title" style="margin-bottom:16px">⚙️ Impostazioni</div>
+<div class="card" style="max-width:500px">
+<div style="margin-bottom:14px">
+<label for="settingsUsername">Nome utente</label>
+<input id="settingsUsername" style="width:100%" placeholder="Il tuo nome in LAN" onchange="saveUsername(this.value)">
+</div>
+<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px">
+<label style="margin:0">Avvio automatico con Windows</label>
+<input type="checkbox" id="settingsAutoStart" onchange="toggleAutoStart(this.checked)" style="width:18px;height:18px">
+</div>
+<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px">
+<label style="margin:0">Minimizza nella tray (invece di chiudere)</label>
+<input type="checkbox" id="settingsMinimizeTray" checked onchange="toggleMinimizeTray(this.checked)" style="width:18px;height:18px">
+</div>
+<hr style="border-color:var(--border);margin:14px 0">
+<div style="margin-bottom:14px">
+<label>Versione app</label>
+<div style="font-size:13px" id="settingsVersion">—</div>
+</div>
+<button class="btn btn-sm btn-outline" onclick="checkUpdate()">🔍 Controlla aggiornamenti</button>
+<div id="settingsUpdateStatus" style="margin-top:8px;font-size:12px;color:var(--muted)"></div>
+</div>
+</div>
+
+</div></div></div>
+
+<div id="updateBanner" style="display:none;position:fixed;top:0;left:0;right:0;background:var(--accent);color:#fff;padding:10px 20px;z-index:1000;text-align:center;font-size:13px;cursor:pointer" onclick="installUpdate()">
+  🚀 Nuova versione disponibile! <span id="updateVersion"></span> — Clicca per installare.
+</div>
+<div id="updateProgress" style="display:none;position:fixed;top:36px;left:0;right:0;background:var(--bg2);color:var(--text);padding:8px 20px;z-index:1000;text-align:center;font-size:12px;border-bottom:1px solid var(--border)">
+  ⬇️ Scaricamento aggiornamento... <span id="updatePercent">0</span>%
+</div>
+<div id="notifContainer"></div>
+
+<script>
+let currentPage='dashboard',peers=[],games=[],servers=[],achievements=[],screenshots=[],tournaments=[]
+function notify(title,text){const c=document.getElementById('notifContainer');const d=document.createElement('div');d.className='notif';d.innerHTML=`<div class="notif-title">${title}</div><div class="notif-text">${text}</div>`;c.appendChild(d);setTimeout(()=>d.remove(),4000)}
+function switchPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelector('[data-page="'+p+'"]').classList.add('active');currentPage=p;if(p==='peers')refreshPeers();if(p==='games')refreshGames();if(p==='servers')updateServersView();if(p==='achievements')loadAchievements();if(p==='networkmap')updateNetworkMap();if(p==='lobby')refreshLobbies();if(p==='gameserver')refreshGS();if(p==='modpack')refreshModpacks();if(p==='screenshots')refreshScreenshots();if(p==='timetracker')updateTimeTracker();if(p==='tournament')refreshTournaments();if(p==='wol')updateWOLPeers();if(p==='netdiag')updateNetDiag();if(p==='settings')loadSettings()}
+function switchTab(el,id){el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active')}
+
+// DASHBOARD
+function updateDashboard(s){const c=document.getElementById('dashStats');if(!s)return;c.innerHTML=`<div class="card stat-card"><div class="stat-value">${peers.length}</div><div class="stat-label">PC Online</div></div><div class="card stat-card"><div class="stat-value">${s.cpu?.usage?.toFixed(1)||0}%</div><div class="stat-label">CPU</div></div><div class="card stat-card"><div class="stat-value">${s.ram?(s.ram.usagePercent).toFixed(1):0}%</div><div class="stat-label">RAM</div></div><div class="card stat-card"><div class="stat-value">${games.length}</div><div class="stat-label">Giochi</div></div>`}
+function updateDashPeers(){const d=document.getElementById('dashPeers');if(!peers.length){d.innerHTML='<p style="color:var(--muted)">Nessun PC trovato...</p>';return}
+d.innerHTML=peers.slice(0,5).map(p=>`<div class="peer-item" style="margin-bottom:4px"><div class="peer-avatar">${p.name?.charAt(0)||'?'}</div><div class="peer-info"><div class="peer-name">${p.name}</div><div class="peer-meta">${p.ip}</div></div><div class="peer-status"><span class="status-dot online"></span></div></div>`).join('')}
+
+// PEERS
+async function refreshPeers(){peers=await retroLAN.getPeers();document.getElementById('peerCount').textContent=peers.length;const l=document.getElementById('peersList');if(!peers.length){l.innerHTML='<p style="color:var(--muted)">Nessun PC trovato.</p>';updateDashPeers();return}
+l.innerHTML=peers.map(p=>{const cpu=p.stats?.cpu?.usage!=null?p.stats.cpu.usage.toFixed(1)+'%':'N/A';const ram=p.stats?.ram?.usagePercent!=null?p.stats.ram.usagePercent.toFixed(1)+'%':'N/A';return`<div class="peer-item"><div class="peer-avatar">${p.name?.charAt(0)||'?'}</div><div class="peer-info"><div class="peer-name">${p.name}</div><div class="peer-meta">${p.ip} | CPU:${cpu} RAM:${ram}</div></div><div class="peer-status"><span class="status-dot online"></span></div><button class="btn btn-sm btn-primary" onclick="retroLAN.sendFile('${p.ip}',prompt('Percorso file:'))">📁</button></div>`}).join('');updateDashPeers()}
+
+// CHAT
+function sendChat(){const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return;retroLAN.sendChat(t);i.value=''}
+function addChatMessage(m){const c=document.getElementById('chatMessages'),d=document.createElement('div');d.className='chat-msg';d.innerHTML=`<span class="msg-from">${m.from}</span> <span class="msg-text">${m.text}</span> <span class="msg-time">${new Date(m.time).toLocaleTimeString()}</span>`;c.appendChild(d);c.scrollTop=c.scrollHeight}
+
+// LOBBY
+async function createLobby(){const n=document.getElementById('lobbyName').value.trim()||'LAN Party '+new Date().toLocaleDateString();const a=games.map(g=>g.name);const l=await retroLAN.createLobby(n,a);if(l)refreshLobbies()}
+async function refreshLobbies(){const l=await retroLAN.getLobbies();const d=document.getElementById('lobbiesList');if(!l.length){d.innerHTML='<p style="color:var(--muted)">Nessuna lobby attiva.</p>';return}
+d.innerHTML=l.map(x=>`<div class="card lobby-card"><div class="lobby-header"><div class="lobby-name">${x.name}</div><button class="btn btn-sm btn-green" onclick="retroLAN.joinLobby('${x.id}')">Join</button></div><div class="lobby-games">${(x.games||[]).map(g=>'<span class="lobby-game-tag">'+(typeof g==='string'?g:g.name)+'</span>').join('')}</div><div class="lobby-players">${(x.players||[]).map(p=>p.name).join(', ')}</div></div>`).join('')}
+
+// GAMES
+async function refreshGames(){games=await retroLAN.getGames();const d=document.getElementById('gamesList');if(!games.length){d.innerHTML='<p style="color:var(--muted)">Nessun gioco rilevato.</p>';return}
+d.innerHTML=games.map(g=>`<div class="game-item"><div class="game-icon">🎮</div><div class="game-info"><div class="game-name">${g.name}</div><div class="game-platform">${g.platform||''}${g.running?' <span class="game-status running">● In esecuzione</span>':''}</div></div><button class="btn btn-sm btn-primary" onclick="retroLAN.launchGame('${g.name}')">▶️</button></div>`).join('')}
+
+// SERVERS
+function updateServersView(){const d=document.getElementById('serversList');if(!servers.length){d.innerHTML='<p style="color:var(--muted)">Scansione automatica...</p>';return}
+d.innerHTML=servers.map(s=>`<div class="server-item"><div style="font-size:18px">🌐</div><div class="server-name">${s.game}</div><div class="server-ip">${s.ip}:${s.port}</div><div class="server-players">●</div><button class="btn btn-sm btn-primary" onclick="retroLAN.joinServer('${s.ip}',${s.port})">Join</button></div>`).join('')}
+
+// FILES
+function updateFileTransfers(){document.getElementById('fileTransfers').innerHTML='<p style="color:var(--muted);font-size:13px">Clicca 📁 su un PC per inviare file.</p>'}
+
+// WAKE-ON-LAN
+function updateWOLPeers(){const d=document.getElementById('wolPeers');if(!peers.length){d.innerHTML='<p style="color:var(--muted)">Nessun PC in rete.</p>';return}
+d.innerHTML=peers.map(p=>`<div class="peer-item"><div class="peer-avatar">${p.name?.charAt(0)||'?'}</div><div class="peer-info"><div class="peer-name">${p.name}</div><div class="peer-meta">${p.ip}</div></div><button class="btn btn-sm btn-primary" onclick="wakePC('${p.ip}')">🔌 Accendi</button></div>`).join('')}
+async function wakePC(ip){const r=await retroLAN.wolSend(ip);notify(r.ok?'✅ WOL Inviato':'❌ '+r.error,r.ok?'Magic packet spedito a '+ip:r.error)}
+
+// GAME SERVER
+async function refreshGS(){const list=await retroLAN.gsList();const d=document.getElementById('gsList');if(!list.length){d.innerHTML='<p style="color:var(--muted)">Nessun server trovato. Aggiungi un server Minecraft o personalizzato.</p>';return}
+d.innerHTML=list.map(s=>`<div class="peer-item"><div style="font-size:18px">⚡</div><div class="peer-info"><div class="peer-name">${s.name}</div><div class="peer-meta">${s.path||''}</div></div><button class="btn btn-sm btn-green" onclick="startServer('${s.name}')">▶️</button><button class="btn btn-sm btn-red" onclick="stopServer('${s.name}')">⏹️</button></div>`).join('')}
+async function startServer(id){const r=await retroLAN.gsStart(id);notify(r.ok?'✅ Server avviato':'❌ '+r.error,r.ok?id:r.error);refreshGS()}
+async function stopServer(id){await retroLAN.gsStop(id);refreshGS()}
+async function addCustomServer(){const n=document.getElementById('gsName').value.trim(),e=document.getElementById('gsExe').value.trim(),a=document.getElementById('gsArgs').value.trim();if(!n||!e){notify('❌ Errore','Nome e percorso richiesti');return};if(!n||!e)return;await retroLAN.gsAdd(n,e,a);notify('✅ Server aggiunto',n);refreshGS()}
+
+// MODPACK
+async function packAndShare(){const p=document.getElementById('modpackPath').value.trim();if(!p){notify('❌','Inserisci un percorso');return};const r=await retroLAN.modpackPack(p);if(r.ok){notify('✅ Modpack pronta',r.name+' ('+(r.size/1024/1024).toFixed(1)+' MB)');refreshModpacks()}else notify('❌ Errore',r.error)}
+async function refreshModpacks(){const list=await retroLAN.modpackList();const d=document.getElementById('modpackList');if(!list.length){d.innerHTML='<p style="color:var(--muted)">Nessuna modpack condivisa.</p>';return}
+d.innerHTML=list.map(m=>`<div class="peer-item"><div style="font-size:18px">📦</div><div class="peer-info"><div class="peer-name">${m.name}</div><div class="peer-meta">${(m.size/1024/1024).toFixed(1)} MB</div></div><button class="btn btn-sm btn-primary" onclick="navigator.clipboard.writeText('${m.file}');notify('📋','Percorso copiato')">📋</button></div>`).join('')}
+
+// JUKEBOX
+async function queueTrack(){const p=document.getElementById('jukeboxFile').value.trim();if(!p){notify('❌','Inserisci percorso file');return};const r=await retroLAN.jukeboxQueue(p);if(r.ok){notify('🎵 In coda',r.name);document.getElementById('jukeboxStatus').textContent='Brano in coda: '+r.name}else notify('❌',r.error)}
+async function playJukebox(){const r=await retroLAN.jukeboxPlay();if(r.ok){document.getElementById('jukeboxStatus').innerHTML='<span style="color:var(--green)">▶️ In riproduzione: '+r.track+'</span>';notify('🎵 Jukebox','Riproduzione avviata')}else notify('❌',r.error)}
+async function skipJukebox(){const r=await retroLAN.jukeboxSkip();if(r.end)document.getElementById('jukeboxStatus').textContent='🎵 Coda finita';else if(r.ok)document.getElementById('jukeboxStatus').innerHTML='<span style="color:var(--green)">▶️ '+r.track+'</span>'}
+
+// TOURNAMENT
+async function createTournament(){const n=document.getElementById('tName').value.trim(),g=document.getElementById('tGame').value.trim(),p=document.getElementById('tPlayers').value.split(',').map(s=>s.trim()).filter(Boolean),ts=parseInt(document.getElementById('tTeamSize').value);if(!n||!g||p.length<2){notify('❌','Dati insufficienti');return};const t=await retroLAN.tournamentCreate({name:n,game:g,players:p,teamSize:ts});if(t){notify('🏆 Torneo creato',n);refreshTournaments()}}
+async function refreshTournaments(){const t=await retroLAN.tournamentList();const d=document.getElementById('tournamentsView');if(!t.length){d.innerHTML='<p style="color:var(--muted)">Nessun torneo attivo.</p>';return}
+d.innerHTML=t.map(tn=>`<div class="card" style="margin-bottom:8px"><div class="lobby-header"><div class="lobby-name">🏆 ${tn.name}</div><span style="font-size:12px;color:var(--muted)">${tn.game} | ${tn.teams.length} team</span></div>${tn.bracket.map((r,i)=>`<div style="margin:6px 0;font-size:12px"><strong>Round ${i+1}</strong>${r.matches.map(m=>`<div style="padding:3px 8px;background:var(--hover);border-radius:4px;margin:2px 0">${m.team1?.players?.join(', ')||'?'} vs ${m.team2?.players?.join(', ')||'?'} ${m.scores?.team1!=null?'('+m.scores.team1+'-'+m.scores.team2+')':''}</div>`).join('')}</div>`).join('')}</div>`).join('')}
+
+// SCREENSHOTS
+async function refreshScreenshots(){screenshots=await retroLAN.screenshotsList();const d=document.getElementById('screenshotsGrid');if(!screenshots.length){d.innerHTML='<p style="color:var(--muted)">Nessuno screenshot ancora.</p>';return}
+d.innerHTML=screenshots.map(s=>`<div class="card" style="padding:8px;text-align:center"><div style="font-size:40px;padding:12px">🖼️</div><div style="font-size:11px;color:var(--muted)">${s.name}</div><div style="font-size:10px;color:var(--muted)">${(s.size/1024).toFixed(0)} KB</div></div>`).join('')}
+
+// NETDIAG
+async function runPingAll(){const d=document.getElementById('netdiagResults');if(!peers.length){d.innerHTML='<p style="color:var(--muted)">Nessun PC in rete.</p>';return}
+d.innerHTML='<p style="color:var(--muted)">Ping in corso...</p>';const r=await retroLAN.netdiagPingAll(peers);d.innerHTML=r.map(x=>`<div class="peer-item"><div class="peer-info"><div class="peer-name">${x.name}</div><div class="peer-meta">${x.ip}</div></div><div style="font-size:13px;font-weight:600;color:${x.alive?'var(--green)':'var(--red)'}">${x.alive?x.latency+'ms':'❌'}</div></div>`).join('')}
+async function runSpeedtest(){const d=document.getElementById('netdiagResults');if(!peers.length){d.innerHTML='<p style="color:var(--muted)">Nessun PC in rete per test.</p>';return}
+const target=peers[0];d.innerHTML='<p style="color:var(--muted)">Speed test verso '+target.name+' ('+target.ip+') in corso...</p>';const r=await retroLAN.netdiagSpeedtest(target.ip);if(r.error)d.innerHTML='<p style="color:var(--red)">❌ '+r.error+'</p>';else d.innerHTML=`<div class="card stat-card"><div class="stat-value">${r.mbps} Mbps</div><div class="stat-label">${(r.bytes/1024/1024).toFixed(1)} MB in ${r.duration.toFixed(1)}s</div></div>`}
+function updateNetDiag(){if(!peers.length)document.getElementById('netdiagResults').innerHTML='<p style="color:var(--muted)">Clicca "Ping Tutti" per iniziare.</p>'}
+
+// TIMETRACKER
+async function updateTimeTracker(){const d=document.getElementById('timetrackerStats');const s=await retroLAN.timetrackerStats();if(!s||!s.totals||!Object.keys(s.totals).length){d.innerHTML='<p style="color:var(--muted)">Nessuna sessione registrata. Gioca a qualcosa!</p>';return}
+const entries=Object.entries(s.totals).sort((a,b)=>b[1]-a[1]);d.innerHTML='<div class="card-grid" style="grid-template-columns:1fr">'+entries.map(([game,ms])=>`<div class="peer-item"><div class="game-icon">🎮</div><div class="peer-info"><div class="peer-name">${game}</div><div class="peer-meta">${(ms/3600000).toFixed(1)} ore totali</div></div></div>`).join('')+'</div>';if(s.active?.length)d.innerHTML+='<div style="margin-top:10px;font-size:13px;color:var(--green)">● In esecuzione: '+s.active.map(a=>a.game).join(', ')+'</div>'}
+
+// KILLSWITCH
+async function killswitchOn(){const r=await retroLAN.killswitchOn();if(r.ok){document.getElementById('ksStatus').innerHTML='<span style="color:var(--red);font-weight:600">🔴 Internet bloccato. Solo LAN attiva.</span>';notify('🔒 Killswitch','Internet bloccato')}else document.getElementById('ksStatus').innerHTML='<span style="color:var(--red)">❌ '+r.error+'</span>'}
+async function killswitchOff(){const r=await retroLAN.killswitchOff();if(r.ok){document.getElementById('ksStatus').innerHTML='<span style="color:var(--green);font-weight:600">🟢 Internet sbloccato.</span>';notify('🟢 Killswitch','Internet ripristinato')}}
+
+// NETWORK MAP
+async function updateNetworkMap(){const m=await retroLAN.getNetworkMap(),d=document.getElementById('networkMap');if(!m||!m.nodes?.length){d.innerHTML='<p style="color:var(--muted)">Scansione...</p>';return}
+d.innerHTML=`<div style="background:var(--accent);color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;margin-bottom:4px">📡 Router</div>${m.nodes.map(n=>`<div style="width:2px;height:12px;background:var(--border)"></div><div class="peer-item" style="margin:0"><div class="peer-avatar" style="width:30px;height:30px;font-size:12px">${n.name?.charAt(0)||'?'}</div><div class="peer-info"><div class="peer-name">${n.name}</div><div class="peer-meta">${n.ip}</div></div></div>`).join('')}`}
+
+// ACHIEVEMENTS
+async function loadAchievements(){achievements=await retroLAN.getAchievements();document.getElementById('achievementsList').innerHTML=achievements.map(a=>`<div class="ach-item ${a.unlocked?'':'locked'}"><div class="ach-icon">${a.icon||'🏆'}</div><div class="ach-info"><div class="ach-name">${a.name}</div><div class="ach-desc">${a.description}</div></div><div style="font-size:18px">${a.unlocked?'✅':'🔒'}</div></div>`).join('')}
+
+// SETTINGS
+async function loadSettings(){const u=await retroLAN.getUsername();document.getElementById('settingsUsername').value=u;const as=await retroLAN.getAutoStart();document.getElementById('settingsAutoStart').checked=as;const mt=await retroLAN.getMinimizeToTray();document.getElementById('settingsMinimizeTray').checked=mt;const v=await retroLAN.getAppVersion();document.getElementById('settingsVersion').textContent='v'+v}
+async function saveUsername(n){if(!n.trim())return;await retroLAN.setUsername(n.trim());notify('✅','Nome utente aggiornato')}
+async function toggleAutoStart(e){await retroLAN.setAutoStart(e);notify(e?'✅ Avvio automatico attivato':'⏹️ Avvio automatico disattivato')}
+async function toggleMinimizeTray(e){await retroLAN.setMinimizeToTray(e)}
+function checkUpdate(){const d=document.getElementById('settingsUpdateStatus');d.textContent='🔍 Controllo in corso...';retroLAN.onUpdateAvailable(i=>{d.innerHTML='<span style="color:var(--green)">✅ Nuova versione v'+i.version+' disponibile</span>'});retroLAN.onUpdateNotAvailable(()=>{d.innerHTML='<span style="color:var(--muted)">✅ Già all\'ultima versione</span>'});retroLAN.onUpdateError(e=>{d.innerHTML='<span style="color:var(--red)">❌ '+e+'</span>'});retroLAN.checkForUpdates();setTimeout(()=>{if(d.textContent==='🔍 Controllo in corso...')d.innerHTML='<span style="color:var(--muted)">Nessun aggiornamento trovato</span>'},10000)}
+
+// UPDATES
+retroLAN.onUpdateAvailable(i=>{const b=document.getElementById('updateBanner');document.getElementById('updateVersion').textContent='v'+i.version;b.style.display='block'})
+retroLAN.onUpdateProgress(p=>{const d=document.getElementById('updateProgress');document.getElementById('updatePercent').textContent=Math.round(p.percent);d.style.display='block'})
+retroLAN.onUpdateDownloaded(()=>{document.getElementById('updateProgress').innerHTML='✅ Download completato. Installazione...';setTimeout(()=>retroLAN.installUpdate(),2000)})
+retroLAN.onDeepLinkJoin(id=>{switchPage('lobby');notify('🔗 Collegamento','Unisciti alla lobby: '+id)})
+function installUpdate(){retroLAN.downloadUpdate()}
+
+// STATS & EVENTS
+if(retroLAN){
+retroLAN.onSystemStats(s=>{document.getElementById('statusBar').innerHTML=`🟢 CPU:${s.cpu?.usage?.toFixed(1)||0}% RAM:${s.ram?(s.ram.usagePercent).toFixed(1):0}% ${peers.length}PC`;updateDashboard(s)})
+retroLAN.onPeerJoin(p=>{peers=peers.filter(x=>x.id!==p.id);peers.push(p);refreshPeers()})
+retroLAN.onPeerLeave(p=>{peers=peers.filter(x=>x.id!==p.id);refreshPeers()})
+retroLAN.onPeerUpdate(p=>{peers=peers.map(x=>x.id===p.id?p:x);refreshPeers()})
+retroLAN.onChatMessage(m=>addChatMessage(m))
+retroLAN.onGamesUpdated(g=>{games=g;if(currentPage==='games')refreshGames()})
+retroLAN.onServerFound(s=>{if(!servers.find(x=>x.ip===s.ip&&x.port===s.port))servers.push(s);if(currentPage==='servers')updateServersView()})
+retroLAN.onLobbyUpdate(()=>{if(currentPage==='lobby')refreshLobbies()})
+retroLAN.onNewScreenshot(ss=>{if(currentPage==='screenshots')refreshScreenshots();notify('🖼️ Nuovo screenshot',ss.name)})
+retroLAN.onGameSessionStart(g=>notify('🎮 '+g.game,'Sessione iniziata'))
+retroLAN.onGameSessionEnd(g=>{if(currentPage==='timetracker')updateTimeTracker()})
+}
+
+// INIT
+refreshPeers();refreshGames();loadAchievements();updateFileTransfers()
+</script>
+</body></html>

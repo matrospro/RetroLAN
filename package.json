@@ -1,0 +1,109 @@
+{
+  "name": "retrolan",
+  "version": "2.0.0",
+  "description": "RetroLAN — LAN Party Hub: trova PC, chat, lobby, server, file, tornei, screenshot, jukebox, diagnostica",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "node_modules\\electron\\dist\\electron.exe .",
+    "start:dev": "set NODE_ENV=development && node_modules\\electron\\dist\\electron.exe .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "publish": "electron-builder --publish always",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "build": {
+    "appId": "com.retrolan.app",
+    "productName": "RetroLAN",
+    "copyright": "Copyright © 2024 RetroLAN",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets/",
+        "to": "assets",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        "portable"
+      ],
+      "icon": "build/icon.png",
+      "signAndEditExecutable": false,
+      "sign": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RetroLAN",
+      "uninstallDisplayName": "RetroLAN v2.0",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "icon": "build/icon.icns",
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "asarUnpack": ["node_modules/systeminformation/**"]
+    },
+    "dmg": {
+      "title": "RetroLAN v2.0",
+      "contents": [
+        { "x": 130, "y": 220, "type": "file" },
+        { "x": 410, "y": 220, "type": "link", "path": "/Applications" }
+      ]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "build/icon.png",
+      "category": "Network",
+      "synopsis": "LAN Party Hub",
+      "description": "Trova PC, chat, lobby, server, file, tornei, screenshot, jukebox e diagnostica sulla tua LAN.",
+      "maintainer": "retrolan@local.net"
+    },
+    "appImage": {
+      "license": "MIT"
+    },
+    "deb": {
+      "depends": ["libnotify4"]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "retrolan",
+      "repo": "retrolan",
+      "releaseType": "release"
+    },
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/systeminformation/**"
+    ]
+  },
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "electron-updater": "^6.3.0",
+    "systeminformation": "^5.21.0"
+  },
+  "devDependencies": {
+    "electron": "^42.3.3",
+    "electron-builder": "^26.15.0"
+  }
+}
