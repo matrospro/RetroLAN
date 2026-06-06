@@ -27,19 +27,10 @@
       "public/**/*",
       "node_modules/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "assets/",
-        "to": "assets",
-        "filter": ["**/*"]
-      }
-    ],
+
     "win": {
       "target": [
-        {
-          "target": "nsis",
-          "arch": ["x64"]
-        },
+        { "target": "nsis", "arch": ["x64"] },
         "portable"
       ],
       "icon": "build/icon.png"
@@ -72,12 +63,6 @@
       "synopsis": "LAN Party Hub",
       "description": "Trova PC, chat, lobby, server, file, tornei, screenshot, jukebox e diagnostica sulla tua LAN.",
       "maintainer": "retrolan@local.net"
-    },
-    "appImage": {
-      "license": "MIT"
-    },
-    "deb": {
-      "depends": ["libnotify4"]
     },
     "publish": {
       "provider": "github",
